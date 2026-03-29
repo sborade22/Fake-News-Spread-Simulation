@@ -1,4 +1,3 @@
-
 import streamlit as st
 import networkx as nx
 import random
@@ -32,10 +31,10 @@ In this simulation:
 
 st.sidebar.header("Simulation Parameters")
 
-num_users = st.sidebar.number_input("Number of Users",5,100,20)
-connection_prob = st.sidebar.number_input("Connection Probability",0.0,1.0,0.3)
-spread_prob = st.sidebar.number_input("Fake News Spread Probability",0.0,1.0,0.4)
-fact_ratio = st.sidebar.number_input("Fact Checker Ratio",0.0,0.5,0.2)
+num_users = st.sidebar.number_input("Number of Users", 5, 100, 20)
+connection_prob = st.sidebar.number_input("Connection Probability", 0.0, 1.0, 0.3)
+spread_prob = st.sidebar.number_input("Fake News Spread Probability", 0.0, 1.0, 0.4)
+fact_ratio = st.sidebar.number_input("Fact Checker Ratio", 0.0, 0.5, 0.2)
 
 # ---------------- NETWORK GENERATION ----------------
 
@@ -46,7 +45,6 @@ if "graph" not in st.session_state:
     types = {}
 
     for node in G.nodes():
-
         if random.random() < fact_ratio:
             types[node] = "FactChecker"
         else:
@@ -71,7 +69,6 @@ if st.sidebar.button("Generate Network"):
     types = {}
 
     for node in G.nodes():
-
         if random.random() < fact_ratio:
             types[node] = "FactChecker"
         else:
@@ -91,7 +88,6 @@ if st.sidebar.button("Spread Fake News"):
     new_infected = set()
 
     for node in infected:
-
         for neighbor in G.neighbors(node):
 
             if neighbor not in infected:
@@ -111,7 +107,7 @@ if st.sidebar.button("Reset Simulation"):
 
 st.subheader("Network Graph")
 
-pos = nx.spring_layout(G, seed=42)
+pos = nx.spring_layout(G, k=0.5, iterations=50, seed=42)
 
 color_map = []
 
@@ -132,13 +128,14 @@ nx.draw(
     G,
     pos,
     node_color=color_map,
-    with_labels=True,
-    node_size=900,
-    font_size=10,
-    edge_color="gray",
+    with_labels=True, # cleaner look
+    node_size=600,
+    font_size=8,
+    edge_color="lightgray",
     ax=ax
 )
 
+plt.tight_layout()
 st.pyplot(fig)
 
 # ---------------- STATISTICS ----------------
@@ -150,13 +147,34 @@ infected_users = len(infected)
 fact_checkers = list(types.values()).count("FactChecker")
 
 data = {
-    "Metric":["Total Users","Fake News Believers","Fact Checkers"],
-    "Value":[total_users,infected_users,fact_checkers]
+    "Metric": ["Total Users", "Fake News Believers", "Fact Checkers"],
+    "Value": [total_users, infected_users, fact_checkers]
 }
 
 df = pd.DataFrame(data)
-
 st.table(df)
+
+# ---------------- BAR CHART ----------------
+
+st.subheader("Final Analysis Chart")
+
+labels = ["Total Users", "Fake News", "Fact Checkers"]
+values = [total_users, infected_users, fact_checkers]
+
+fig2, ax2 = plt.subplots(figsize=(5,4))
+bars = ax2.bar(labels, values)
+for bar in bars:
+    yval=bar.get_height()
+    ax2.text(bar.get_x()+bar.get_width()/2,yval+0.5,int(yval),
+             ha='center',va='bottom',fontsize=8)
+
+
+ax2.set_xlabel("Category",fontsize=9)  
+ax2.set_ylabel("Number of Users" , fontsize=9)  
+ax2.set_title("Fake News Spread Analysis",fontsize=10)
+
+plt.tight_layout()
+st.pyplot(fig2)
 
 # ---------------- INTERPRETATION ----------------
 
@@ -169,6 +187,6 @@ Green nodes represent fact checkers who stop misinformation.
 
 Blue nodes represent normal users.
 
-Fake news spreads through connected users depending
-on the spread probability.
+The bar chart clearly shows comparison between total users,
+infected users, and fact checkers.
 """)
